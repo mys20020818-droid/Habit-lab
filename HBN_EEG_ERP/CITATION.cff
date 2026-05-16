@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the associated manuscript and the Healthy Brain Network data resource."
+title: "HBN SuS+CCD Developmental ERP Decomposition"
+authors:
+  - family-names: "AUTHOR_FAMILY_NAME"
+    given-names: "AUTHOR_GIVEN_NAME"
+date-released: "2026-05-16"
+version: "0.1.0"
+doi: "TO_BE_ADDED"
+url: "TO_BE_ADDED"

@@ -1,0 +1,90 @@
+project:
+  name: hbn_sus_ccd_erp_decomposition
+  random_seed: 20260510
+
+paths:
+  # Replace these placeholders with local BIDS release folders.
+  bids_roots:
+    - "/path/to/hbn_release_1"
+    - "/path/to/hbn_release_2"
+  backup_or_duplicate_roots: []
+  derivatives_root: "derivatives/hbn_decomp"
+  phenotype_file: ""
+  output_root: "results"
+
+tasks:
+  SuS:
+    aliases: ["surround_suppression", "surroundSupp", "SuS"]
+    passive: true
+  CCD:
+    aliases: ["contrast_change_detection", "contrastChangeDetection", "CCD"]
+    passive: false
+
+preprocessing:
+  l_freq: 1.0
+  h_freq: 40.0
+  notch_freq: 60.0
+  resample_sfreq: 250
+  reference: average
+  ica_method: fastica
+  ica_random_state: 20260510
+  reject_epoch_uv: 250
+  min_epochs_per_task: 20
+
+events:
+  operations:
+    visual_onset:
+      require_tasks: 2
+      hed_terms:
+        - "Sensory-event, Visual-presentation"
+        - "Event/Sensory-event/Visual"
+      fallback_trial_type_regex:
+        - "stimulus|disk|array|circle|visual|onset"
+
+features:
+  # Internal keys are retained for compatibility with source-data tables.
+  display_labels:
+    p1: P1
+    n1: P2
+    p3: N450
+  channels:
+    visual_posterior: ["E65", "E66", "E70", "E71", "E75", "E76", "E83", "E84"]
+    frontocentral: ["E5", "E6", "E7", "E12", "E13", "E106", "E112"]
+  windows:
+    p1:
+      operation: visual_onset
+      channel_group: visual_posterior
+      tmin: 0.08
+      tmax: 0.14
+    n1:
+      operation: visual_onset
+      channel_group: visual_posterior
+      tmin: 0.14
+      tmax: 0.22
+    p3:
+      operation: visual_onset
+      channel_group: frontocentral
+      tmin: 0.30
+      tmax: 0.60
+
+models:
+  covariates:
+    - age
+    - sex
+    - task
+    - n_trials
+    - qc_bad_epoch_fraction
+  psychopathology:
+    - p_factor
+    - attention
+    - internalizing
+    - externalizing
+  fdr_method: BH
+
+outputs:
+  manifest: "results/tables/manifest.csv"
+  feature_table: "results/tables/features.csv"
+  component_table: "results/tables/components.csv"
+  developmental_table: "results/tables/developmental_models.csv"
+  psychopathology_table: "results/tables/psychopathology_models.csv"
+  qc_report: "results/reports/qc_report.html"

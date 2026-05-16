@@ -1,0 +1,132 @@
+import os
+PROJECT_ROOT = os.path.abspath(os.path.join(workflow.basedir, ".."))
+CONFIG_PATH = os.path.join(PROJECT_ROOT, "config", "config.yaml")
+SCRIPTS = os.path.join(PROJECT_ROOT, "scripts")
+PY_BUILD_MANIFEST = os.path.join(SCRIPTS, "s01_data_build_manifest.py")
+PY_PREPROCESS = os.path.join(SCRIPTS, "s50_workflow_preprocess_scaffold.py")
+PY_EVENT_TAXONOMY = os.path.join(SCRIPTS, "s06_data_build_event_taxonomy.py")
+PY_DECONVOLVE = os.path.join(SCRIPTS, "s51_workflow_deconvolution_scaffold.py")
+PY_EXTRACT_FEATURES = os.path.join(SCRIPTS, "s52_workflow_extract_features_scaffold.py")
+R_VARIANCE = os.path.join(SCRIPTS, "s53_workflow_variance_decomposition.R")
+R_DEVELOPMENTAL = os.path.join(SCRIPTS, "s54_workflow_developmental_gamm.R")
+R_PSYCHOPATHOLOGY = os.path.join(SCRIPTS, "s55_workflow_psychopathology_assoc.R")
+PY_QC_REPORT = os.path.join(SCRIPTS, "s56_workflow_qc_report.py")
+
+configfile: CONFIG_PATH
+
+OUTPUTS = config["outputs"]
+
+rule all:
+    input:
+        OUTPUTS["manifest"],
+        OUTPUTS["event_table"],
+        OUTPUTS["feature_table"],
+        OUTPUTS["component_table"],
+        OUTPUTS["developmental_table"],
+        OUTPUTS["psychopathology_table"],
+        OUTPUTS["qc_report"]
+
+rule build_manifest:
+    input:
+        config_file=CONFIG_PATH
+    output:
+        OUTPUTS["manifest"]
+    conda:
+        "envs/hbn-eeg.yml"
+    shell:
+        "python {PY_BUILD_MANIFEST:q} --config {input.config_file:q} --out {output:q}"
+
+rule preprocess:
+    input:
+        manifest=OUTPUTS["manifest"],
+        config_file=CONFIG_PATH
+    output:
+        marker="results/markers/preprocess.done"
+    conda:
+        "envs/hbn-eeg.yml"
+    shell:
+        "python {PY_PREPROCESS:q} --config {input.config_file:q} --manifest {input.manifest:q} --marker {output.marker:q}"
+
+rule event_taxonomy:
+    input:
+        manifest=OUTPUTS["manifest"],
+        marker="results/markers/preprocess.done",
+        config_file=CONFIG_PATH
+    output:
+        OUTPUTS["event_table"]
+    conda:
+        "envs/hbn-eeg.yml"
+    shell:
+        "python {PY_EVENT_TAXONOMY:q} --config {input.config_file:q} --manifest {input.manifest:q} --out {output:q}"
+
+rule deconvolve:
+    input:
+        events=OUTPUTS["event_table"],
+        config_file=CONFIG_PATH
+    output:
+        marker="results/markers/deconvolution.done"
+    conda:
+        "envs/hbn-eeg.yml"
+    shell:
+        "python {PY_DECONVOLVE:q} --config {input.config_file:q} --events {input.events:q} --marker {output.marker:q}"
+
+rule extract_features:
+    input:
+        events=OUTPUTS["event_table"],
+        marker="results/markers/deconvolution.done",
+        config_file=CONFIG_PATH
+    output:
+        OUTPUTS["feature_table"]
+    conda:
+        "envs/hbn-eeg.yml"
+    shell:
+        "python {PY_EXTRACT_FEATURES:q} --config {input.config_file:q} --events {input.events:q} --out {output:q}"
+
+rule variance_decomposition:
+    input:
+        features=OUTPUTS["feature_table"],
+        config_file=CONFIG_PATH
+    output:
+        OUTPUTS["component_table"]
+    conda:
+        "envs/hbn-eeg.yml"
+    shell:
+        "Rscript {R_VARIANCE:q} --config {input.config_file:q} --features {input.features:q} --out {output:q}"
+
+rule developmental_gamm:
+    input:
+        components=OUTPUTS["component_table"],
+        config_file=CONFIG_PATH
+    output:
+        OUTPUTS["developmental_table"]
+    conda:
+        "envs/hbn-eeg.yml"
+    shell:
+        "Rscript {R_DEVELOPMENTAL:q} --config {input.config_file:q} --components {input.components:q} --out {output:q}"
+
+rule psychopathology_assoc:
+    input:
+        components=OUTPUTS["component_table"],
+        config_file=CONFIG_PATH
+    output:
+        OUTPUTS["psychopathology_table"]
+    conda:
+        "envs/hbn-eeg.yml"
+    shell:
+        "Rscript {R_PSYCHOPATHOLOGY:q} --config {input.config_file:q} --components {input.components:q} --out {output:q}"
+
+rule qc_report:
+    input:
+        manifest=OUTPUTS["manifest"],
+        events=OUTPUTS["event_table"],
+        features=OUTPUTS["feature_table"],
+        components=OUTPUTS["component_table"],
+        developmental=OUTPUTS["developmental_table"],
+        psychopathology=OUTPUTS["psychopathology_table"],
+        config_file=CONFIG_PATH
+    output:
+        OUTPUTS["qc_report"]
+    conda:
+        "envs/hbn-eeg.yml"
+    shell:
+        "python {PY_QC_REPORT:q} --config {input.config_file:q} --manifest {input.manifest:q} --events {input.events:q} --features {input.features:q} --components {input.components:q} --developmental {input.developmental:q} --psychopathology {input.psychopathology:q} --out {output:q}"

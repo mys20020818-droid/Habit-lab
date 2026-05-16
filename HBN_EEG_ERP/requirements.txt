@@ -1,0 +1,12 @@
+numpy
+pandas
+scipy
+scikit-learn
+statsmodels
+matplotlib
+seaborn
+mne
+mne-bids
+pyyaml
+python-docx
+openpyxl
