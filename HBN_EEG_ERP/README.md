@@ -13,11 +13,11 @@ time-irreversibility analyses are not included.
 
 The manuscript-facing ERP labels are:
 
-| Label | Internal feature key | Time window | Channel group |
-| --- | --- | --- | --- |
-| P1 | `p1` | 80-140 ms | `visual_posterior` |
-| P2 | `n1` | 140-220 ms | `visual_posterior` |
-| N450 | `p3` | 300-600 ms | `frontocentral` |
+| Label | Time window | Channel group |
+| --- | --- | --- |
+| P1 | 80-140 ms | `visual_posterior` |
+| P2 | 140-220 ms | `visual_posterior` |
+| N450 | 300-600 ms | `frontocentral` |
 
 Internal feature keys are retained for compatibility with existing source-data
 tables. Use the display-label mapping in `config/config.example.yaml` when
